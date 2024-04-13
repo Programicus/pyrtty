@@ -8,6 +8,7 @@ SPACE_FREQ = 2295
 BAUD_RATE = 45.45
 SAMPLE_RATE = 44100
 BIT_DURATION = 1 / BAUD_RATE
+AMPLITUDE = .08
 
 # Baudot code (simplified example mapping)
 BAUDOT_CODE = {
@@ -50,7 +51,7 @@ def text_to_baudot(text):
 def generate_tone(frequency, duration, sample_rate=SAMPLE_RATE):
     """Generate a sine wave for a given frequency and duration."""
     t = np.linspace(0, duration, int(sample_rate * duration), False)
-    tone = np.sin(2 * np.pi * frequency * t)
+    tone = AMPLITUDE * np.sin(2 * np.pi * frequency * t)
     return tone
 
 def baudot_to_afsk(baudot_str, mark_freq=MARK_FREQ, space_freq=SPACE_FREQ, baud_rate=BAUD_RATE):
