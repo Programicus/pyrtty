@@ -4,5 +4,16 @@
 		{
 			"path": "."
 		}
-	]
+	],
+	"settings":
+    {
+        "tab_size": 4
+    },
+    "build_systems":
+    [
+        {
+            "name": "build",
+            "shell_cmd": "./sync-and-test.sh"
+        }
+    ]
 }
