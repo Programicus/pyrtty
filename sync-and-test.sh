@@ -10,5 +10,5 @@ if [[ -z $RASPBERRY_IP  ]] || [[ -z $RASPBERRY_UNAME ]] ; then
 	findpi
 fi
 
-rsync -az --delete --exclude='.git/' --exclude='venv/' . ${RASPBERRY_UNAME}@${RASPBERRY_IP}:~/pyrtty
+rsync -azv --delete --exclude='.git/' --exclude='venv/' --exclude='sync-and-test.sh' . ${RASPBERRY_UNAME}@${RASPBERRY_IP}:~/pyrtty
 
