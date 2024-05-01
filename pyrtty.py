@@ -9,6 +9,7 @@ BAUD_RATE = 45.45
 SAMPLE_RATE = 44100
 BIT_DURATION = 1 / BAUD_RATE
 AMPLITUDE = 1
+BLOCKSIZE = 1000
 
 # Baudot code (simplified example mapping)
 BAUDOT_CODE = {
@@ -67,7 +68,7 @@ def baudot_to_afsk(baudot_str, mark_freq=MARK_FREQ, space_freq=SPACE_FREQ, baud_
 
 def play_afsk_signal(signal):
     """Play AFSK signal through the default audio device."""
-    sd.play(signal, SAMPLE_RATE)
+    sd.play(signal, SAMPLE_RATE, blocksize=BLOCKSIZE)
     sd.wait()
 
 # Example usage
