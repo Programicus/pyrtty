@@ -11,6 +11,9 @@ BIT_DURATION = 1 / BAUD_RATE
 AMPLITUDE = 1
 BLOCKSIZE = 1000
 
+MARK_CODE = '1'
+SPACE_CODE = '0'
+
 # Baudot code (simplified example mapping)
 BAUDOT_CODE = {
     'letters': {
@@ -34,17 +37,17 @@ BAUDOT_CODE = {
 
 def text_to_baudot(text):
     """Convert text to 5-bit Baudot code, including necessary shifts."""
-    baudot_str = ''
-    current_mode = 'letters'  # Start in letters mode
+    current_mode = 'letters'  # Start in letters mode as enforced on the following line
+    baudot_str = MARK_CODE + BAUDOT_CODE['LTRS'] + SPACE_CODE + SPACE_CODE
 
     for char in text.upper():  # Baudot code is case-insensitive
         for mode in ['letters', 'figures']:
             if char in BAUDOT_CODE[mode]:
                 if current_mode != mode:
                     # Insert the mode shift code
-                    baudot_str += BAUDOT_CODE['LTRS' if mode == 'letters' else 'FIGS']
+                    baudot_str += MARK_CODE + BAUDOT_CODE['LTRS' if mode == 'letters' else 'FIGS'] + SPACE_CODE + SPACE_CODE
                     current_mode = mode
-                baudot_str += BAUDOT_CODE[mode][char]
+                baudot_str += MARK_CODE + BAUDOT_CODE[mode][char] + SPACE_CODE + SPACE_CODE
                 break
 
     return baudot_str
