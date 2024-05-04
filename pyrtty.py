@@ -49,18 +49,20 @@ def text_to_baudot(text):
 
     return baudot_str
 
-def generate_tone(frequency, duration, sample_rate=SAMPLE_RATE, start_time=0):
+def generate_tone(frequency, duration, sample_rate=SAMPLE_RATE, initial_phase=0):
     """Generate a sine wave for a given frequency and duration."""
-    t = np.linspace(0, duration, int(sample_rate * duration), False) + start_time
-    tone = AMPLITUDE * np.sin(2 * np.pi * frequency * t)
-    return tone
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    tone = np.sin(2 * np.pi * frequency * t + initial_phase)
+    final_phase = (initial_phase + 2 * np.pi * frequency * duration) % (2 * np.pi)
+    return tone, final_phase
 
 def baudot_to_afsk(baudot_str, mark_freq=MARK_FREQ, space_freq=SPACE_FREQ, baud_rate=BAUD_RATE):
     """Convert Baudot code string to AFSK tones."""
     afsk_signal = np.array([])
+    phase = 0
     for bit in baudot_str:
-        frequency = mark_freq if bit == '1' else space_freq
-        tone = generate_tone(frequency, BIT_DURATION, start_time=afsk_signal.shape[0] / SAMPLE_RATE)
+        frequency = mark_freq if bit == MARK_CODE else space_freq
+        tone, phase  = generate_tone(frequency, BIT_DURATION, initial_phase=phase)
         afsk_signal = np.concatenate((afsk_signal, tone))
     return afsk_signal
 
