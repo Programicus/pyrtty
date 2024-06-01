@@ -10,6 +10,8 @@ SAMPLE_RATE = 44100
 BIT_DURATION = 1 / BAUD_RATE
 AMPLITUDE = 1
 BLOCKSIZE = 1000
+CRLF = '\r\n'
+LINE_WIDTH = 70
 
 MARK_CODE = '1'
 SPACE_CODE = '0'
@@ -47,6 +49,8 @@ def text_to_baudot(text):
     current_mode = 'letters'  # Start in letters mode as enforced on the following line
     baudot_str = baudot_append(MARK_CODE * 19, BAUDOT_CODE['LTRS'])
 
+    chars_in_this_line = ''
+
     for char in text.upper():  # Baudot code is case-insensitive
         for mode in ['letters', 'figures']:
             if char in BAUDOT_CODE[mode]:
@@ -55,6 +59,17 @@ def text_to_baudot(text):
                     baudot_str = baudot_append(baudot_str, BAUDOT_CODE['LTRS' if mode == 'letters' else 'FIGS'])
                     current_mode = mode
                 baudot_str = baudot_append(baudot_str, BAUDOT_CODE[mode][char])
+
+                if char == '\r' or char == '\n':
+                	chars_in_this_line = ''
+                else:
+                	chars_in_this_line += char
+
+                if len(chars_in_this_line) >= LINE_WIDTH:
+                	for c in CRLF:
+                		baudot_str = baudot_append(baudot_str, BAUDOT_CODE['letters'][c])
+                	chars_in_this_line = ''
+
                 break
 
     return baudot_str
