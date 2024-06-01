@@ -14,6 +14,9 @@ BLOCKSIZE = 1000
 MARK_CODE = '1'
 SPACE_CODE = '0'
 
+START_BIT = MARK_CODE + SPACE_CODE
+STOP_BIT = MARK_CODE
+
 # Baudot code (simplified example mapping)
 BAUDOT_CODE = {
     'letters': {
@@ -35,19 +38,22 @@ BAUDOT_CODE = {
     'FIGS': '11011'   # Figures shift
 }
 
+def baudot_append(self, symb):
+	return self + START_BIT + symb + STOP_BIT
+
 def text_to_baudot(text):
     """Convert text to 5-bit Baudot code, including necessary shifts."""
     current_mode = 'letters'  # Start in letters mode as enforced on the following line
-    baudot_str = MARK_CODE + BAUDOT_CODE['LTRS'] + SPACE_CODE + SPACE_CODE
+    baudot_str = baudot_append(MARK_CODE * 19, BAUDOT_CODE['LTRS'])
 
     for char in text.upper():  # Baudot code is case-insensitive
         for mode in ['letters', 'figures']:
             if char in BAUDOT_CODE[mode]:
                 if current_mode != mode:
                     # Insert the mode shift code
-                    baudot_str += MARK_CODE + BAUDOT_CODE['LTRS' if mode == 'letters' else 'FIGS'] + SPACE_CODE + SPACE_CODE
+                    baudot_str = baudot_append(baudot_str, BAUDOT_CODE['LTRS' if mode == 'letters' else 'FIGS'])
                     current_mode = mode
-                baudot_str += MARK_CODE + BAUDOT_CODE[mode][char] + SPACE_CODE + SPACE_CODE
+                baudot_str = baudot_append(baudot_str, BAUDOT_CODE[mode][char])
                 break
 
     return baudot_str
