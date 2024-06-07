@@ -7,7 +7,6 @@ MARK_FREQ = 2125
 SPACE_FREQ = 2295
 BAUD_RATE = 45.45
 SAMPLE_RATE = 44100
-BIT_DURATION = 1 / BAUD_RATE
 AMPLITUDE = 1
 BLOCKSIZE = 1000
 CRLF = '\r\n'
@@ -82,11 +81,12 @@ def generate_tone(frequency, duration, sample_rate=SAMPLE_RATE, initial_phase=0)
 
 def baudot_to_afsk(baudot_str, mark_freq=MARK_FREQ, space_freq=SPACE_FREQ, baud_rate=BAUD_RATE):
 	"""Convert Baudot code string to AFSK tones."""
+	bit_duration = 1 / baud_rate
 	afsk_signal = np.array([])
 	phase = 0
 	for bit in baudot_str:
 		frequency = mark_freq if bit == MARK_CODE else space_freq
-		tone, phase  = generate_tone(frequency, BIT_DURATION, initial_phase=phase)
+		tone, phase  = generate_tone(frequency, bit_duration, initial_phase=phase)
 		afsk_signal = np.concatenate((afsk_signal, tone))
 	return afsk_signal
 
