@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
+import argparse
+import sys
+
 import numpy as np
 import sounddevice as sd
 
 # Constants
-MARK_FREQ = 2125
-SPACE_FREQ = 2295
-BAUD_RATE = 45.45
-SAMPLE_RATE = 44100
-AMPLITUDE = 1
-BLOCKSIZE = 1000
+DEFAULT_MARK_FREQ = 2125
+DEFAULT_SPACE_FREQ = 2295
+DEFAULT_BAUD_RATE = 45.45
+DEFAULT_SAMPLE_RATE = 44100
+DEFAULT_BLOCKSIZE = 1000
+DEFAULT_AMPLITUDE = 1
+
+DEFAULT_MESSAGE = 'Hello World! This is pyrtty.py\r\n(This is the example message)\r\n12345 Text 67890\r\nRYRYRYRYRYRYRYRYRYRY\r\nAMAMAMAMAMAMAMAMAMA'
+
 CRLF = '\r\n'
 LINE_WIDTH = 70
 
@@ -72,14 +78,14 @@ def text_to_baudot(text):
 
 	return baudot_str
 
-def generate_tone(frequency, duration, sample_rate=SAMPLE_RATE, initial_phase=0):
+def generate_tone(frequency, duration, sample_rate=DEFAULT_SAMPLE_RATE, initial_phase=0):
 	"""Generate a sine wave for a given frequency and duration. Ensures phase continuity when concating sections"""
 	t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
 	tone = np.sin(2 * np.pi * frequency * t + initial_phase)
 	final_phase = (initial_phase + 2 * np.pi * frequency * duration) % (2 * np.pi)
 	return tone, final_phase
 
-def baudot_to_afsk(baudot_str, mark_freq=MARK_FREQ, space_freq=SPACE_FREQ, baud_rate=BAUD_RATE):
+def baudot_to_afsk(baudot_str, mark_freq=DEFAULT_MARK_FREQ, space_freq=DEFAULT_SPACE_FREQ, baud_rate=DEFAULT_BAUD_RATE, amp=DEFAULT_AMPLITUDE):
 	"""Convert Baudot code string to AFSK tones."""
 	bit_duration = 1 / baud_rate
 	afsk_signal = np.array([])
@@ -90,13 +96,30 @@ def baudot_to_afsk(baudot_str, mark_freq=MARK_FREQ, space_freq=SPACE_FREQ, baud_
 		afsk_signal = np.concatenate((afsk_signal, tone))
 	return afsk_signal
 
-def play_afsk_signal(signal):
+def play_afsk_signal(signal, sample_rate=DEFAULT_SAMPLE_RATE, blocksize=DEFAULT_BLOCKSIZE):
 	"""Play AFSK signal through the default audio device."""
-	sd.play(signal, SAMPLE_RATE, blocksize=BLOCKSIZE)
+	sd.play(signal, sample_rate, blocksize=blocksize)
 	sd.wait()
 
-# Example usage
-text = "Hello, World 123!"
-baudot_str = text_to_baudot(text)
-afsk_signal = baudot_to_afsk(baudot_str)
-play_afsk_signal(afsk_signal)
+
+def main():
+	parser = argparse.ArgumentParser(description='Generate AFSK signals from text.')
+	parser.add_argument('text', nargs='*', default=[DEFAULT_MESSAGE], help='Text to convert to baudot then a AFSK signal')
+	parser.add_argument('--mark-freq', type=float, default=DEFAULT_MARK_FREQ, help=f'Frequency of mark tone (default: {DEFAULT_MARK_FREQ} Hz)')
+	parser.add_argument('--space-freq', type=float, default=DEFAULT_SPACE_FREQ, help=f'Frequency of space tone (default: {DEFAULT_SPACE_FREQ} Hz)')
+	parser.add_argument('--baud-rate', type=float, default=DEFAULT_BAUD_RATE, help=f'Baud rate (default: {DEFAULT_BAUD_RATE})')
+	parser.add_argument('--sample-rate', type=int, default=DEFAULT_SAMPLE_RATE, help=f'Sample rate (default: {DEFAULT_SAMPLE_RATE} Hz)')
+	parser.add_argument('--amplitude', type=float, default=DEFAULT_AMPLITUDE, help=f'Amplitude of the waveform (default: {DEFAULT_AMPLITUDE})')
+	parser.add_argument('--block-size', type=int, default=DEFAULT_BLOCKSIZE, help=f'Block size for audio playback (default: {DEFAULT_BLOCKSIZE})')
+	args = parser.parse_args()
+	
+	text = ' '.join(args.text)
+	if text == '-':
+		text = sys.stdin.read()
+
+	baudot = text_to_baudot(text)
+	afsk = baudot_to_afsk(baudot, mark_freq=args.mark_freq, space_freq=args.space_freq, baud_rate=args.baud_rate, amp=args.amplitude)
+	play_afsk_signal(afsk, sample_rate=args.sample_rate, blocksize=args.block_size)
+
+if __name__ == '__main__':
+	main()
