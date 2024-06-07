@@ -3,6 +3,7 @@ import argparse
 import sys
 
 import numpy as np
+from scipy.io.wavfile import write as __write_to_wav_raw
 import sounddevice as sd
 
 # Constants
@@ -96,6 +97,10 @@ def baudot_to_afsk(baudot_str, mark_freq=DEFAULT_MARK_FREQ, space_freq=DEFAULT_S
 		afsk_signal = np.concatenate((afsk_signal, tone))
 	return afsk_signal
 
+def write_to_wav(file_name, signal, sample_rate=DEFAULT_SAMPLE_RATE):
+	signal16 = (signal * (2**15)).astype(np.int16)
+	__write_to_wav_raw(file_name, sample_rate, signal16)
+
 def play_afsk_signal(signal, sample_rate=DEFAULT_SAMPLE_RATE, blocksize=DEFAULT_BLOCKSIZE):
 	"""Play AFSK signal through the default audio device."""
 	sd.play(signal, sample_rate, blocksize=blocksize)
@@ -111,6 +116,8 @@ def main():
 	parser.add_argument('--sample-rate', type=int, default=DEFAULT_SAMPLE_RATE, help=f'Sample rate (default: {DEFAULT_SAMPLE_RATE} Hz)')
 	parser.add_argument('--amplitude', type=float, default=DEFAULT_AMPLITUDE, help=f'Amplitude of the waveform (default: {DEFAULT_AMPLITUDE})')
 	parser.add_argument('--block-size', type=int, default=DEFAULT_BLOCKSIZE, help=f'Block size for audio playback (default: {DEFAULT_BLOCKSIZE})')
+	parser.add_argument('--write', type=str, help='Write output to a WAV file instead of playing it')
+	
 	args = parser.parse_args()
 	
 	text = ' '.join(args.text)
@@ -119,7 +126,11 @@ def main():
 
 	baudot = text_to_baudot(text)
 	afsk = baudot_to_afsk(baudot, mark_freq=args.mark_freq, space_freq=args.space_freq, baud_rate=args.baud_rate, amp=args.amplitude)
-	play_afsk_signal(afsk, sample_rate=args.sample_rate, blocksize=args.block_size)
+	
+	if args.write:
+		write_to_wav(args.write, afsk, sample_rate=args.sample_rate)
+	else:
+		play_afsk_signal(afsk, sample_rate=args.sample_rate, blocksize=args.block_size)
 
 if __name__ == '__main__':
 	main()
