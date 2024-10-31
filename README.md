@@ -29,5 +29,12 @@ pip -r requirements.txt
 ## Step 2 Run
 For now, you can use this as just a invocable script
 ```
-python pyrtty.py
+python pyrtty.py <command line args>
+```
+
+Additionally, this can also be used ass a package, so long as the appropraite headers paths are setup
+```
+import pyrtty
+
+...
 ```
