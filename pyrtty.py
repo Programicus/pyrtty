@@ -97,16 +97,23 @@ def generate_tone(frequency:float, duration:float, sample_rate:int=DEFAULT_SAMPL
 	final_phase = (initial_phase + 2 * np.pi * frequency * duration) % (2 * np.pi)
 	return tone, final_phase
 
-def baudot_to_afsk(baudot_str:str, mark_freq:float=DEFAULT_MARK_FREQ, space_freq:float=DEFAULT_SPACE_FREQ, baud_rate:float=DEFAULT_BAUD_RATE, amp:float=DEFAULT_AMPLITUDE) -> NDArray[np.float32]:
+def baudot_to_afsk(
+		baudot_str:str, 
+		mark_freq:float=DEFAULT_MARK_FREQ,
+		space_freq:float=DEFAULT_SPACE_FREQ,
+		sample_rate:int=DEFAULT_SAMPLE_RATE,
+		baud_rate:float=DEFAULT_BAUD_RATE,
+		amp:float=DEFAULT_AMPLITUDE
+	) -> NDArray[np.float32]:
 	"""Convert Baudot code string to AFSK tones."""
 	bit_duration = 1 / baud_rate
 	afsk_signal = np.array([])
 	phase = 0
 	for bit in baudot_str:
 		frequency = mark_freq if bit == MARK_CODE else space_freq
-		tone, phase  = generate_tone(frequency, bit_duration, initial_phase=phase)
+		tone, phase  = generate_tone(frequency, bit_duration, initial_phase=phase, sample_rate=sample_rate)
 		afsk_signal = np.concatenate((afsk_signal, tone))
-	return afsk_signal
+	return amp * afsk_signal
 
 def write_to_wav(file_name:str, signal:NDArray[np.float32], sample_rate:int=DEFAULT_SAMPLE_RATE):
 	signal16 = (signal * (2**15)).astype(np.int16)
@@ -136,7 +143,14 @@ def main():
 		text = sys.stdin.read()
 
 	baudot = text_to_baudot(text)
-	afsk = baudot_to_afsk(baudot, mark_freq=args.mark_freq, space_freq=args.space_freq, baud_rate=args.baud_rate, amp=args.amplitude) # pyright: ignore[reportAny]
+	afsk = baudot_to_afsk(
+		baudot,
+		mark_freq=args.mark_freq,					# pyright: ignore[reportAny]
+		space_freq=args.space_freq,					# pyright: ignore[reportAny]
+		sample_rate=args.sample_rate,				# pyright: ignore[reportAny]
+		baud_rate=args.baud_rate,					# pyright: ignore[reportAny]
+		amp=args.amplitude							# pyright: ignore[reportAny]
+		)
 	
 	if args.write: # pyright: ignore[reportAny]
 		write_to_wav(args.write, afsk, sample_rate=args.sample_rate) # pyright: ignore[reportAny]
