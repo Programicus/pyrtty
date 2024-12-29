@@ -109,10 +109,12 @@ def baudot_to_afsk(
 	bit_duration = 1 / baud_rate
 	afsk_signal = np.array([])
 	phase = 0
+	tones:list[NDArray[np.float32]] = []
 	for bit in baudot_str:
 		frequency = mark_freq if bit == MARK_CODE else space_freq
 		tone, phase  = generate_tone(frequency, bit_duration, initial_phase=phase, sample_rate=sample_rate)
-		afsk_signal = np.concatenate((afsk_signal, tone))
+		tones.append(tone)
+	afsk_signal = np.concatenate(tones)
 	return amp * afsk_signal
 
 def write_to_wav(file_name:str, signal:NDArray[np.float32], sample_rate:int=DEFAULT_SAMPLE_RATE):
