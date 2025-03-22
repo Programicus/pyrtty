@@ -4,7 +4,7 @@
 
 import argparse
 import sys
-from typing import Callable
+from typing import Callable, List
 
 import numpy as np
 from numpy.typing import NDArray
@@ -23,6 +23,8 @@ DEFAULT_MESSAGE = 'Hello World! This is pyrtty.py\r\n(This is the example messag
 
 CRLF = '\r\n'
 LINE_WIDTH = 70
+VALID_SPLITS = ' ,.;:!?-\t'
+
 
 MARK_CODE = '1'
 SPACE_CODE = '0'
@@ -54,6 +56,54 @@ BAUDOT_CODE:dict[str, str|dict[str,str]] = {
 	'FIGS': __wrap('11011')   # Figures shift
 }
 
+def split_single_line(line: str) -> List[str]:
+    """Split a single line of text into multiple lines of max LINE_WIDTH"""
+    if len(line) <= LINE_WIDTH:
+        return [line]
+
+    result_lines = []
+    remaining_text = line
+
+    while len(remaining_text) > LINE_WIDTH:
+        # Find the last valid split point
+        split_idx = LINE_WIDTH
+        for i in range(LINE_WIDTH - 1, 0, -1):
+            if remaining_text[i] in VALID_SPLITS:
+                split_idx = i + 1  # Include the split character in the current line
+                break
+
+        # Handle case where no valid split is found (very long word)
+        if split_idx == LINE_WIDTH and LINE_WIDTH < len(remaining_text):
+            current_line = remaining_text[:split_idx]
+            remaining_text = remaining_text[split_idx:]
+        else:
+            current_line = remaining_text[:split_idx].rstrip()
+            remaining_text = remaining_text[split_idx:].lstrip()
+
+        result_lines.append(current_line)
+
+    # Add the remaining text if not empty
+    if remaining_text:
+        result_lines.append(remaining_text)
+
+    return result_lines
+
+def split_message_into_lines(text: str) -> str:
+    """Split the messages to conform to line limits while preserving word boundaries"""
+    if not text:
+        return text
+
+    # Handle existing line breaks
+    if CRLF in text or '\n' in text:
+        # Split by existing line breaks first
+        existing_lines = text.replace(CRLF, '\n').split('\n')
+        processed_lines = []
+        for line in existing_lines:
+            processed_lines.extend(split_single_line(line))
+        return CRLF.join(processed_lines)
+
+    return CRLF.join(split_single_line(text))
+
 def text_to_baudot(text:str) -> str:
 	"""Convert text to 5-bit Baudot code, including necessary shifts and adding appropriate start/stop bits."""
 	current_mode = 'letters'  # Start in letters mode as enforced on the following line
@@ -63,11 +113,11 @@ def text_to_baudot(text:str) -> str:
 		'FIGS': BAUDOT_CODE['FIGS'],
 	} 
 
+	split_msg = split_message_into_lines(text)
+
 	baudot_str:str = MARK_CODE * 20 + mode_shift['LTRS']
 
-	chars_in_this_line = ''
-
-	for char in text.upper():  # Baudot code is case-insensitive
+	for char in split_msg.upper():  # Baudot code is case-insensitive
 		for mode in ['letters', 'figures']:
 			if char in BAUDOT_CODE[mode]:
 				if current_mode != mode:
@@ -75,18 +125,6 @@ def text_to_baudot(text:str) -> str:
 					baudot_str += mode_shift['LTRS' if mode == 'letters' else 'FIGS']
 					current_mode = mode
 				baudot_str += BAUDOT_CODE[mode][char] #pyright:ignore[reportArgumentType]
-
-				if char == '\r' or char == '\n':
-					chars_in_this_line = ''
-				else:
-					chars_in_this_line += char
-
-				if len(chars_in_this_line) >= LINE_WIDTH:
-					for c in CRLF:
-						baudot_str += BAUDOT_CODE['letters'][c] #pyright:ignore[reportArgumentType]
-					chars_in_this_line = ''
-
-				break
 
 	return baudot_str
 
