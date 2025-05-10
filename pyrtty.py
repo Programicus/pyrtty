@@ -12,9 +12,9 @@ from scipy.io.wavfile import write as __write_to_wav_raw #pyright: ignore[report
 import sounddevice as sd
 
 # Constants
-DEFAULT_MARK_FREQ = 2125
-DEFAULT_SPACE_FREQ = 2295
-DEFAULT_BAUD_RATE = 45.45
+DEFAULT_MARK_FREQ = 1575
+DEFAULT_SPACE_FREQ = 2425
+DEFAULT_BAUD_RATE = 75
 DEFAULT_SAMPLE_RATE = 44100
 DEFAULT_BLOCKSIZE = 1000
 DEFAULT_AMPLITUDE = 1
