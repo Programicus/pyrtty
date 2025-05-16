@@ -5,16 +5,24 @@
 import argparse
 import sys
 from typing import Callable, List
+import logging
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.io.wavfile import write as __write_to_wav_raw #pyright: ignore[reportUnknownVariableType]
 import sounddevice as sd
 
+FORMAT = '%(asctime)s %(message)s'
+logging.basicConfig(level=logging.INFO, format=FORMAT)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+
 # Constants
-DEFAULT_MARK_FREQ = 2125
-DEFAULT_SPACE_FREQ = 2295
-DEFAULT_BAUD_RATE = 45.45
+DEFAULT_MARK_FREQ = 1575
+DEFAULT_SPACE_FREQ = 2425
+DEFAULT_BAUD_RATE = 75
 DEFAULT_SAMPLE_RATE = 44100
 DEFAULT_BLOCKSIZE = 1000
 DEFAULT_AMPLITUDE = 1
@@ -113,18 +121,29 @@ def text_to_baudot(text:str) -> str:
 		'FIGS': BAUDOT_CODE['FIGS'],
 	} 
 
-	split_msg = split_message_into_lines(text)
+	split_msg = split_message_into_lines(CRLF + text)
 
-	baudot_str:str = MARK_CODE * 20 + mode_shift['LTRS']
+	logger.info(f'raw message:\n{text}')
+	logger.info('----------------------------')
+	logger.info(f'split message:\n{split_msg}')
+	logger.info('----------------------------')
+
+	baudot_arr = []
 
 	for char in split_msg.upper():  # Baudot code is case-insensitive
 		for mode in ['letters', 'figures']:
 			if char in BAUDOT_CODE[mode]:
 				if current_mode != mode:
 					# Insert the mode shift code
-					baudot_str += mode_shift['LTRS' if mode == 'letters' else 'FIGS']
+					baudot_arr.append(mode_shift['LTRS' if mode == 'letters' else 'FIGS'])
 					current_mode = mode
-				baudot_str += BAUDOT_CODE[mode][char] #pyright:ignore[reportArgumentType]
+				baudot_arr.append(BAUDOT_CODE[mode][char]) #pyright:ignore[reportArgumentType]
+
+	logger.debug('|'.join(baudot_arr))
+
+	baudot_str:str = MARK_CODE * 20 + mode_shift['LTRS']
+	baudot_str += ''.join(baudot_arr)
+	baudot_str += MARK_CODE
 
 	return baudot_str
 
