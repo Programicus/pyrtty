@@ -180,7 +180,7 @@ def write_to_wav(file_name:str, signal:NDArray[np.float32], sample_rate:int=DEFA
 
 def play_afsk_signal(signal:NDArray[np.float32], sample_rate:int=DEFAULT_SAMPLE_RATE, blocksize:int=DEFAULT_BLOCKSIZE):
 	"""Play AFSK signal through the default audio device."""
-	sd.play(signal, sample_rate, blocksize=blocksize, loop=True) #pyright: ignore[reportUnknownMemberType]
+	sd.play(signal, sample_rate, blocksize=blocksize) #pyright: ignore[reportUnknownMemberType]
 	_ = sd.wait()
 
 
